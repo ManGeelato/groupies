@@ -1,17 +1,22 @@
 import AccountProfile from "@/components/forms/AccountProfile";
+import { fetchUser } from "@/lib/actions/user.actions";
 import { currentUser } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
 async function Page() {
     const user = await currentUser();
-    const userInformation = {}
+    if(!user) return null;
+
+    const userInformation =  await fetchUser(user.id);
+    if(userInformation?.onboarded) redirect("/");
 
     const userData = {
-        id: user?.id,
+        id: user.id,
         objectId: userInformation?._id,
-        username: userInformation?.username || user?.username,
-        name: userInformation?.name || user?.firstName || '',
-        bio: userInformation?.bio || '',
-        image: userInformation?.image || user?.imageUrl
+        username: userInformation ?  userInformation?.username : user?.username,
+        name: userInformation ? userInformation?.name : user?.firstName ?? '',
+        bio: userInformation ?  userInformation?.bio : '',
+        image: userInformation ?  userInformation?.image : user.imageUrl,
     }
 
 
