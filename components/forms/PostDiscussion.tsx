@@ -14,10 +14,9 @@ import * as z from "zod"
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import {usePathname, useRouter} from 'next/navigation';
-// import { updateUser } from "@/lib/actions/user.actions";
 import { DiscussionValidation } from "@/lib/validations/discussion";
 import { createDiscussion } from "@/lib/actions/discussion.actions";
-
+import { useOrganization } from "@clerk/nextjs";
 
 interface AccountProfileProps{
     user: {
@@ -34,6 +33,7 @@ interface AccountProfileProps{
 function PostDiscussion({userId}: {userId: string}) {
     const pathname = usePathname();
     const router = useRouter();
+    const { organization } = useOrganization();
 
     const form = useForm({
         resolver: zodResolver(DiscussionValidation),
@@ -48,7 +48,7 @@ function PostDiscussion({userId}: {userId: string}) {
             {
                 text: values.thread,
                 author: userId,
-                communityId: null,
+                communityId: organization ? organization.id :  null,
                 path: pathname
             }
         )

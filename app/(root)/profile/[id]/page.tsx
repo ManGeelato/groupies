@@ -20,7 +20,6 @@ async function Page ({params} : {params : {id: string}}) {
 
   return (
     <section>
-        <h1>Tsek</h1>
         <ProfileHeader 
             accountId={userInformation.id}
             authUserId={user.id}

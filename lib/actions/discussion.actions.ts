@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import Discussion from "../models/discussion.model";
 import User from "../models/user.model";
 import { connectToDatabase } from "../mongoose"
+import Community from "../models/community.model";
 
 interface Params {
     text: string,
@@ -12,24 +13,37 @@ interface Params {
     path: string
 }
 
-export async function createDiscussion({text, author, communityId, path}: Params) {
+export async function createDiscussion({ text, author, communityId, path }: Params) {
     try {
+
         connectToDatabase();
 
-    const createdDiscussion = await Discussion.create({
-        text,
-        author,
-        community: null,
-    });
+        const communityIdObject = await Community.findOne(
+            { id: communityId },
+            { _id: 1 }
+        );
 
-    await User.findByIdAndUpdate(author, {
-        $push:{threads: createdDiscussion._id}
-    })
+        const createdThread = await Discussion.create({
+            text,
+            author,
+            community: communityIdObject, // Assign communityId if provided, or leave it null for personal account
+        });
 
-    revalidatePath(path)
-        
-    } catch (error:any) {
-        throw new Error(`Failed to create discussion: ${error.message}`);   
+        // Update User model
+        await User.findByIdAndUpdate(author, {
+            $push: { threads: createdThread._id },
+        });
+
+        if (communityIdObject) {
+            // Update Community model
+            await Community.findByIdAndUpdate(communityIdObject, {
+            $push: { threads: createdThread._id },
+            });
+        }
+
+        revalidatePath(path);
+    } catch (error: any) {
+        throw new Error(`Failed to create thread: ${error.message}`);
     }
 }
 
